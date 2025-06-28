@@ -72,7 +72,7 @@ npm start
 
 ## Screenshots
 
-![App Home Screenshot](https://via.placeholder.com/468x300?text=App+Screenshot+Here)
-![Panel Added Home Screen](https://via.placeholder.com/468x300?text=App+Screenshot+Here)
-![Two Panel Added Home Screen](https://via.placeholder.com/468x300?text=App+Screenshot+Here)
+![App Home Screenshot](Screenshots/IronSurf_home.png)
+![Panel Added Home Screen](Screenshots/IronSurf_Panel_added.png)
+![Two Panel Added Home Screen](Screenshots/IronSurf_2_Panel_Added.png)
 
