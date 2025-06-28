@@ -72,7 +72,12 @@ npm start
 
 ## Screenshots
 
+IronSurf Browser Home Screen
 ![App Home Screenshot](Screenshots/IronSurf_home.png)
+
+IronSurf Browser Home Screen with a single floating panel
 ![Panel Added Home Screen](Screenshots/IronSurf_Panel_added.png)
+
+IronSurf Browser Home Screen with two floating panels
 ![Two Panel Added Home Screen](Screenshots/IronSurf_2_Panel_Added.png)
 
