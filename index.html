@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>IronSurf HUD</title>
+  <script src="https://cdn.jsdelivr.net/npm/interactjs/dist/interact.min.js"></script>
+  <style>
+    html, body {
+      margin: 0;
+      height: 100%;
+      background: #0a0a0a;
+      overflow: hidden;
+      font-family: 'Orbitron', sans-serif;
+    }
+
+    #toolbar {
+      height: 50px;
+      background: #111;
+      display: flex;
+      align-items: center;
+      padding: 0 20px;
+      color: #00ffff;
+      -webkit-app-region: drag;
+    }
+
+    #toolbar button {
+      margin-left: auto;
+      padding: 10px 20px;
+      background: #00ffff20;
+      border: 1px solid #00ffff80;
+      color: #00ffff;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 14px;
+      -webkit-app-region: no-drag;
+    }
+
+    #toolbar button.exit-btn {
+      background: #ff004420;
+      border: 1px solid #ff004480;
+      color: #ff0044;
+    }
+    #toolbar button.exit-btn:hover {
+      background: #ff0044;
+      color: #fff;
+    }
+
+    #main {
+      position: relative;
+      width: 100%;
+      height: calc(100% - 50px);
+      overflow: hidden;
+    }
+
+    .panel {
+      position: absolute;
+      width: 600px;
+      height: 400px;
+      background: rgba(10,10,10,0.95);
+      border: 1px solid #00ffff44;
+      box-shadow: 0 0 20px rgba(0, 255, 255, 0.3);
+      border-radius: 10px;
+      overflow: hidden;
+    }
+
+    .panel-header {
+      height: 40px;
+      background: rgba(0,255,255,0.1);
+      display: flex;
+      align-items: center;
+      padding: 0 10px;
+      position: relative;
+    }
+
+    .drag-handle {
+      width: 40px;
+      height: 100%;
+      cursor: move;
+      background: transparent;
+      flex-shrink: 0;
+    }
+
+    .panel-header input,
+    .panel-header button,
+    .panel-header .close-btn {
+      -webkit-app-region: no-drag;
+    }
+
+    .panel-header input {
+      flex: 1;
+      height: 24px;
+      margin: 0 10px;
+      border: none;
+      border-radius: 4px;
+      padding: 0 8px;
+      font-size: 14px;
+    }
+
+    .panel-header button {
+      padding: 4px 8px;
+      font-size: 12px;
+      background: #00ffff20;
+      color: #00ffff;
+      border: 1px solid #00ffff44;
+      border-radius: 4px;
+      cursor: pointer;
+      margin-right: 8px;
+    }
+
+    .close-btn {
+      padding: 4px 8px;
+      font-size: 12px;
+      background: #ff004420;
+      color: #ff0044;
+      border: 1px solid #ff004480;
+      border-radius: 4px;
+      cursor: pointer;
+      margin-right: 8px;
+    }
+
+    .close-btn:hover {
+      background: #ff0044;
+      color: white;
+    }
+
+    webview {
+      width: 100%;
+      height: calc(100% - 40px);
+      border: none;
+    }
+  </style>
+</head>
+<body>
+  <div id="toolbar">
+    IronSurf
+    <button onclick="addPanel()">+ Panel</button>
+    <button class="exit-btn" onclick="exitApp()">Exit</button>
+  </div>
+  <div id="main"></div>
+
+  <script>
+    let panelCount = 0;
+
+    function exitApp() {
+      if (window.api && window.api.closeApp) {
+        window.api.closeApp();
+      } else {
+        window.close();
+      }
+    }
+
+    function addPanel() {
+      const panel = document.createElement('div');
+      panel.className = 'panel';
+      panel.style.left = `${60 + panelCount * 20}px`;
+      panel.style.top = `${60 + panelCount * 20}px`;
+
+      const id = `panel-${panelCount}`;
+      panel.innerHTML = `
+        <div class="panel-header">
+          <div class="drag-handle"></div>
+          <span class="close-btn">✕</span>
+          <input type="text" placeholder="Enter URL or search..." />
+          <button>Go</button>
+        </div>
+        <webview id="${id}" src="https://www.google.com" allowpopups></webview>
+      `;
+
+      document.getElementById('main').appendChild(panel);
+
+      const dragHandle = panel.querySelector('.drag-handle');
+      const closeBtn = panel.querySelector('.close-btn');
+      const input = panel.querySelector('input');
+      const goBtn = panel.querySelector('button');
+      const webview = panel.querySelector('webview');
+
+      function navigate() {
+        let val = input.value.trim();
+        if (!val) return;
+        const isUrl = val.includes('.') || val.startsWith('http');
+        const finalUrl = isUrl ? (val.startsWith('http') ? val : 'https://' + val)
+                               : 'https://www.google.com/search?q=' + encodeURIComponent(val);
+        webview.src = finalUrl;
+      }
+
+      goBtn.onclick = navigate;
+      input.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') navigate();
+      });
+      closeBtn.onclick = () => panel.remove();
+
+      interact(panel)
+        .draggable({
+          allowFrom: '.drag-handle',
+          listeners: {
+            start(event) { const wv = event.target.querySelector('webview'); if (wv) wv.style.pointerEvents = 'none'; },
+            move(event) {
+              const t = event.target;
+              const x = (parseFloat(t.getAttribute('data-x')) || 0) + event.dx;
+              const y = (parseFloat(t.getAttribute('data-y')) || 0) + event.dy;
+              t.style.transform = `translate(${x}px, ${y}px)`;
+              t.setAttribute('data-x', x);
+              t.setAttribute('data-y', y);
+            },
+            end(event) { const wv = event.target.querySelector('webview'); if (wv) wv.style.pointerEvents = 'auto'; }
+          }
+        })
+        .resizable({
+          edges: { left: true, right: true, bottom: true, top: true },
+          listeners: {
+            move(event) {
+              const t = event.target;
+              let x = parseFloat(t.getAttribute('data-x')) || 0;
+              let y = parseFloat(t.getAttribute('data-y')) || 0;
+              t.style.width = `${event.rect.width}px`;
+              t.style.height = `${event.rect.height}px`;
+              x += event.deltaRect.left;
+              y += event.deltaRect.top;
+              t.style.transform = `translate(${x}px, ${y}px)`;
+              t.setAttribute('data-x', x);
+              t.setAttribute('data-y', y);
+            }
+          },
+          modifiers: [ interact.modifiers.snapSize({ targets: [interact.snappers.grid({ x:50,y:50 })] }) ]
+        });
+
+      panelCount++;
+    }
+  </script>
+</body>
+</html>
